@@ -43,28 +43,48 @@ d %>%
        title="WIN criterion per number of players") +
   facet_wrap(~n.players) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(text = element_text(size=16), axis.text.x = element_text(angle = 45, hjust = 1)) 
 
-ggsave('WIN.pdf')
+# ggsave('WIN.pdf')
+```
+
+
+```{r}
+d %>% 
+  rowwise() %>% 
+  dplyr::filter(int.rule=="stop", end.rule=="loose") %>% 
+  mutate(win.sd = sd(c(winner1.perc, winner2.perc, winner3.perc,
+                       winner4.perc, winner5.perc, winner6.perc), na.rm=TRUE)) %>% 
+  select(game, n.players, int.rule, end.rule, win.sd) %>% 
+  ggplot(aes(x=n.players, y=win.sd, colour=game)) +
+  geom_line() +
+  geom_point(size=2.5) +
+  ylim(0,0.15) +
+  labs(x="number of players",y="winners sd", color="variant",
+       title="WIN criterion for loose and stop rules") +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 ## WIN percentage
 
 
-```{r, fig.height=8}
+```{r, fig.height=4}
 ideal.percentages <- data.frame(n.players=3:6, winner1.perc=1/3:6, int.rule="none")
 
 d %>% 
   select(game, n.players, int.rule, end.rule, matches("winner")) %>% 
+  dplyr::filter(game=="abstract" | game=="althoen") %>% 
   ggplot(aes(x=n.players, y=winner1.perc, shape=int.rule, colour=end.rule)) +
   geom_line() +
   geom_point(size=2) +
   geom_line(data=ideal.percentages, color="black", linetype="dashed") +
-  scale_y_log10() +
-  labs(x="number of players",y="winning percentage for 1st player", 
+  #scale_y_log10() +
+  labs(x="number of players",y="win % 1st player", 
        color="ending", shape="interaction") +
-  facet_wrap(~game, scales = "free_y") +
-  theme_bw()
+  facet_wrap(~game) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 ```{r, fig.height=8}
@@ -80,7 +100,8 @@ d %>%
   labs(x="number of players",y="winning percentage for 3rd player", 
        color="ending", shape="interaction") +
   facet_wrap(~game, scales = "free_y") +
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 The 6th player can only be visualized for 6 player games, and so we lose one dimension:
@@ -131,7 +152,7 @@ did achieve the lead only a few turns before the end of the game.
 
 We are just plotting the swap 6 player variants for presentation purposes (the different interaction rules and less number of players give similar results):
 
-```{r}
+```{r, fig.height=8}
 d %>% 
   select(game, n.players, int.rule, end.rule, matches("rounds")) %>% 
   select(game, n.players, int.rule, end.rule, matches("persistence")) %>% 
@@ -142,10 +163,11 @@ d %>%
   ggplot(aes(x=rounds, y=n.games, shape=int.rule, colour=end.rule)) +
   geom_line() +
   geom_point(size=1.5) +
-  labs(x="turns ahead before winning",y="number of games", 
+  labs(x="rounds ahead before winning",y="number of games", 
        color="ending", shape="interaction") +
-  facet_wrap(~game) +
-  theme_bw()
+  facet_wrap(~game, ncol=2) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 ## ANP criterion
@@ -156,7 +178,7 @@ players are able to take the lead.
 
 For visualization purposes we just show for the goose ending rule:
 
-```{r}
+```{r, fig.height=8}
 d %>% 
   dplyr::filter(n.players==6) %>% 
   select(game, int.rule, end.rule, matches("players.ahead")) %>% 
@@ -166,13 +188,13 @@ d %>%
   ggplot(aes(x=ahead, y=total, shape=int.rule, colour=end.rule)) +
   geom_line() +
   geom_point(size=1.5) +
-  labs(x="number of players ahead",y="percentage of games", 
+  labs(x="number of players ahead",y="number of games", 
        color="ending", shape="interaction") +
-  facet_wrap(~game) +
+  facet_wrap(~game, ncol=2) +
   theme_bw()
 ```
 
-The Dayking variant shows the best results in these criterion.
+The Dayking variant shows the worst results in this criterion.
 
 
 
@@ -204,30 +226,32 @@ d2a %>%
 
 We present just for one type of ending rule. This rule does not change the interaction during the game, and eases the visualization:
 
-```{r}
+```{r, fig.height=8}
 ggplot(d3, aes(x=ahead, y=mean, shape=int.rule, colour=end.rule)) +
   geom_line() +
   geom_point(size=1.5) +
   # geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1) +  
   labs(x="i-th player ahead",y="percentage of total rounds", 
        color="ending", shape="interaction") +
-  facet_wrap(~game) +
-  theme_bw()
+  facet_wrap(~game, ncol=2) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 Notice however that the standard deviation is high, usually with the similar value as the mean itself. 
 
 ## Game Length
 
-```{r, fig.height=6}
+```{r, fig.height=8}
 d %>% 
   dplyr::filter(n.players==6) %>% 
   select(game, n.players, int.rule, end.rule, matches("moves")) %>%
   ggplot(aes(x=int.rule, y=moves.mean, fill=end.rule)) +
   geom_bar(stat = "identity") +
   labs(x="interaction rule",y="mean game size") +
-  facet_wrap(~game) +
-  theme_bw()
+  facet_wrap(~game, ncol=2) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 
@@ -267,14 +291,14 @@ print(paste(worst.fit$game,":",worst.fit$n.players, "players with",
 
 ```{r}
 res <- df$n.rounds
-hist(res, breaks=12, ylab=NA, xlab="number of turns", prob=T, yaxt='n',
+hist(res, breaks=15, ylab=NA, xlab="number of turns", prob=T, yaxt='n',
      main="", sub="")
 xs  <- seq(min(res), max(res), len=100)
 ys  <- dlnorm(xs, worst.fit$lognorm.mean, worst.fit$lognorm.sd)
 points(xs,ys,type="l", col="red", lwd=2)
 ```
 
-```{r}
+```{r, fig.height=8}
 d %>% 
   select(game, n.players, int.rule, end.rule, matches("log")) %>% 
   dplyr::filter(int.rule=="swap") %>% 
@@ -284,15 +308,16 @@ d %>%
   labs(x="number of players",y="AIC", 
        color="ending", shape="interaction") +
   scale_y_log10() +
-  facet_wrap(~game) +
-  theme_bw()
+  facet_wrap(~game, ncol=2) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 The values decrease with the number of players. This means player interaction together with the special cells, makes the game less predictable wrt to the lognormal model fit.
 
 
 
-```{r}
+```{r, fig.height=8}
 d %>% 
   select(game, n.players, int.rule, end.rule, matches("log")) %>% 
   # dplyr::filter(int.rule=="swap") %>% 
@@ -302,8 +327,9 @@ d %>%
   labs(x="number of players",y="Mean of lognormal fit", 
        color="ending", shape="interaction") +
   scale_y_log10() +
-  facet_wrap(~game) +
-  theme_bw()
+  facet_wrap(~game, ncol=2) +
+  theme_bw() + 
+  theme(text = element_text(size=16))
 ```
 
 This well-behaved lines are evidence that we can estimate the average mean and variance of these variants with more players.
